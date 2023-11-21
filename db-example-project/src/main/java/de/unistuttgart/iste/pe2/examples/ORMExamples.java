@@ -24,7 +24,7 @@ public class ORMExamples {
      */
     public void runDemonstration() {
         // creates connection to a MariaDB installed on localhost
-        boolean connected = this.connectToDB("jdbc:mariadb://localhost:3306/pe2", "root", "root");
+        boolean connected = this.connectToDB("jdbc:mariadb://bilbao.informatik.uni-stuttgart.de/pe2-db-a1", "pe2-nutzer", "esJLtFm6ksCT4mCyOS");
 
         if (connected) {
             try {
