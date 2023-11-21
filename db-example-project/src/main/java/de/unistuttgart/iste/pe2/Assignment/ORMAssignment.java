@@ -13,9 +13,6 @@ import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
-import de.unistuttgart.iste.pe2.examples.ORMExamples;
-import de.unistuttgart.iste.pe2.model.Department;
-
 public class ORMAssignment {
     private ConnectionSource connectionSource;
     private Dao<Letters, Integer> lettersDao;
@@ -42,6 +39,31 @@ public class ORMAssignment {
             closeConnectionToDB();
         }
         return word;
+    }
+
+    public List<LetterWithIDs> getIDs() {
+        List<LetterWithIDs> results = new ArrayList<>(3);
+        boolean connected = connectToDB();
+        if (connected) {
+            List<String> letterValues = new ArrayList<>(Arrays.asList("V", "b", "t"));
+            for (String letter : letterValues) {
+                List<Letters> matchingLetters = new ArrayList<>();
+                try {
+                    matchingLetters = lettersDao.queryForEq("letter", letter);
+                } catch (SQLException exception) {
+                    logSQLException(exception);
+                }
+
+                List<Integer> matchingIDs = new ArrayList<>(matchingLetters.size());
+                for (Letters matchingLetter : matchingLetters) {
+                    matchingIDs.add(matchingLetter.getId());
+                }
+                LetterWithIDs letterWithIDs = new LetterWithIDs(letter, matchingIDs);
+                results.add(letterWithIDs);
+            }
+        }
+        closeConnectionToDB();
+        return results;
     }
 
     private boolean connectToDB() {
