@@ -3,6 +3,7 @@ package de.unistuttgart.iste.pe2.Assignment;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -11,31 +12,31 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.table.TableUtils;
 
 public class ORMAssignment {
     private ConnectionSource connectionSource;
     private Dao<Letters, Integer> lettersDao;
     private static Logger LOGGER = Logger.getLogger(ORMAssignment.class.getName());
 
-    public Optional<String> getLetters() {
+    public String getLetters() {
+        String word = "";
         boolean connected = connectToDB();
-        Optional<String> word = Optional.empty();
+
         if (connected) {
             List<Integer> arrayIndexes = new ArrayList<>(Arrays.asList(
                     20, 44, 50, 13, 17, 33, 41,
                     68, 77, 44, 29, 72, 48, 71,
                     37, 48, 11, 69, 5, 65, 65));
 
-            word = Optional.of("");
             for (Integer id : arrayIndexes) {
                 try {
                     String letter = lettersDao.queryForId(id).getLetter();
-                    word = Optional.of(word.get().concat(letter));
+                    word += letter;
                 } catch (SQLException exception) {
                     logSQLException(exception);
                 }
             }
+
             closeConnectionToDB();
         }
         return word;
@@ -44,10 +45,12 @@ public class ORMAssignment {
     public List<LetterWithIDs> getIDs() {
         List<LetterWithIDs> results = new ArrayList<>(3);
         boolean connected = connectToDB();
+
         if (connected) {
             List<String> letterValues = new ArrayList<>(Arrays.asList("V", "b", "t"));
             for (String letter : letterValues) {
-                List<Letters> matchingLetters = new ArrayList<>();
+
+                List<Letters> matchingLetters = new LinkedList<>();
                 try {
                     matchingLetters = lettersDao.queryForEq("letter", letter);
                 } catch (SQLException exception) {
@@ -58,12 +61,34 @@ public class ORMAssignment {
                 for (Letters matchingLetter : matchingLetters) {
                     matchingIDs.add(matchingLetter.getId());
                 }
+
                 LetterWithIDs letterWithIDs = new LetterWithIDs(letter, matchingIDs);
                 results.add(letterWithIDs);
             }
         }
         closeConnectionToDB();
         return results;
+    }
+
+    public SumAndAverage sumAndAverage(){
+        int sum = 0;
+        float average = 0;
+        boolean connected = connectToDB();
+
+        if (connected) {
+            List<Letters> letters = new LinkedList<>();
+            try {
+                letters = lettersDao.queryForAll();
+            } catch (SQLException exception) {
+                    logSQLException(exception);
+            }
+            sum = letters.stream().mapToInt(Letters::getId).sum();
+            if (!letters.isEmpty()) {
+                average = sum/(float)letters.size();
+            }
+        }
+
+        return new SumAndAverage(sum, average);
     }
 
     private boolean connectToDB() {
